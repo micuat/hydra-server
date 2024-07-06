@@ -7,7 +7,11 @@ var cors = require('cors')
 
 const app = express()
 const path = require('path')
-var http = require('http')
+var http = require('https')
+
+var privateKey = fs.readFileSync(path.join(__dirname, '/certs/key.pem'), 'utf8')
+var certificate = fs.readFileSync(path.join(__dirname, '/certs/certificate.pem'), 'utf8')
+var credentials = {key: privateKey, cert: certificate}
 
 const corsOptions = {
   origin: ['https://hydra.ojack.xyz'],
@@ -17,7 +21,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 
-var server = http.createServer(app)
+var server = http.createServer(credentials, app)
 //
 // TURN server access
 var twilio = require('twilio')
@@ -32,7 +36,8 @@ var io = require('socket.io')(server, {cors: {
   // methods: ["GET", "POST"],
   credentials: true,
 }})
-require('./mastodon-gallery.js')(app)
+//require('./mastodon-gallery.js')(app)
+require('./chevereto-gallery.js')(app)
 
 // create a server on port 8000
 var httpsPort = process.env.HTTPS_PORT !== undefined ? process.env.HTTPS_PORT : 8000
@@ -102,4 +107,4 @@ app.use('/garden', express.static(path.join(__dirname, '../frontend/hydra-garden
 app.use('/grants', express.static(path.join(__dirname, '../frontend/hydra-grants/public')))
 
 
-app.use(express.static(path.join(__dirname, '../frontend/web-editor/public')))
+app.use(express.static(path.join(__dirname, '../frontend/web-editor/dist')))
