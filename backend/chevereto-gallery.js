@@ -78,8 +78,9 @@ module.exports = (app) => {
       }
   })
 
-  const upload = multer({ storage: storage });
-  app.post("/image", upload.single('previewImage'), (req, res) => {
+  const maxSize = 1024 * 1024 * 16
+  const upload = multer({ storage: storage, limits: { fileSize: maxSize } })
+  app.post("/image", upload.single('previewImage'), (req, response) => {
     if(process.env.CHEVERETO_API_KEY && process.env.CHEVERETO_API_URL) {
       console.log('UPLOADING TO CHEVERETO');
       superagent
@@ -89,8 +90,10 @@ module.exports = (app) => {
       .end((err, res) => {
         if (err) {
           console.log(err)
+          response.status(500).send('error upload to chevereto')
         } else {
           console.log('Media uploaded!')
+          response.send('Media uploaded!')
           db.update(
             { _id: req.query.sketch_id },
             { $set: { name: req.query.name, chevereto_url: res.body.image.url }
